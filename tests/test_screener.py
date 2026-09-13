@@ -1,7 +1,13 @@
+import os
+import sys
 import pandas as pd
 import numpy as np
-import pytest
-from src.screener import calculate_indicators, evaluate_signals
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+try:
+    from src.screener import calculate_indicators, evaluate_signals
+except ModuleNotFoundError:
+    from screener import calculate_indicators, evaluate_signals
 
 def test_calculate_indicators():
     # Generate 60 days of synthetic price data

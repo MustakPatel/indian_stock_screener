@@ -1,5 +1,11 @@
-import pytest
-from src.notifier import format_telegram_alert
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+try:
+    from src.notifier import format_telegram_alert
+except ModuleNotFoundError:
+    from notifier import format_telegram_alert
 
 def test_format_telegram_alert():
     signal = {

@@ -1,5 +1,11 @@
-import pytest
-from src.ipo import get_active_ipos, evaluate_ipo_recommendation
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+try:
+    from src.ipo import get_active_ipos, evaluate_ipo_recommendation
+except ModuleNotFoundError:
+    from ipo import get_active_ipos, evaluate_ipo_recommendation
 
 def test_evaluate_ipo_recommendation():
     # High GMP IPO

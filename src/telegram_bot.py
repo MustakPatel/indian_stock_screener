@@ -6,12 +6,19 @@ import sys
 # Ensure root directory is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import threading
+from datetime import datetime, timezone, timedelta
+
 from src.screener import scan_stocks
 from src.sentiment import analyze_sentiment
 from src.notifier import format_telegram_alert, format_telegram_alert_html
 from src.portfolio import calculate_portfolio_summary, add_holding, remove_holding
 from src.ipo import get_active_ipos
 from src.backtester import backtest_stock
+try:
+    from src.digest import generate_morning_digest
+except ModuleNotFoundError:
+    from digest import generate_morning_digest
 
 DEFAULT_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8993271292:AAFqmVh6MdUHMpyvOULWnAWP27qedY6L6PM")
 DEFAULT_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "8530348020")
@@ -29,6 +36,7 @@ def process_telegram_command(text: str, filepath: str = None) -> list:
 🤖 <b>INDIAN STOCK & IPO HIGH-PROFIT AI BOT</b> 🤖
 
 📲 <b>Available Commands:</b>
+• <code>/digest</code> - Daily Market & Tech Morning Digest (NIFTY 50, SENSEX, AI & Tech News)
 • <code>/scan</code> - Scan NSE market with 1-Yr Historical Win Rate Signals
 • <code>/backtest &lt;symbol&gt;</code> - Run 1-Year Historical Backtest & Win-Rate Score for any stock (e.g. <code>/backtest ZOMATO</code>)
 • <code>/ipo</code> - Scan upcoming Indian IPOs for High Listing Gain opportunities (+30% to +80%)
@@ -36,6 +44,9 @@ def process_telegram_command(text: str, filepath: str = None) -> list:
 • <code>/buy &lt;symbol&gt; &lt;qty&gt; &lt;price&gt;</code> - Record stock buy position
 • <code>/sell &lt;symbol&gt;</code> - Close stock position
 """]
+
+    elif cmd == "/digest":
+        return [generate_morning_digest()]
 
     elif cmd == "/ipo":
         ipos = get_active_ipos()
@@ -137,6 +148,34 @@ def process_telegram_command(text: str, filepath: str = None) -> list:
     else:
         return ["Unknown command. Type /help to see available commands."]
 
+def start_daily_scheduler(token: str, chat_id: str):
+    """Background daemon thread that dispatches Daily Morning Digest at 8:00 AM IST daily."""
+    if not token or not chat_id:
+        return
+    print(f"🌅 Starting Automated Daily Morning Digest Scheduler for Chat ID: {chat_id}...")
+    ist_tz = timezone(timedelta(hours=5, minutes=30))
+    sent_today = False
+    
+    while True:
+        try:
+            now_ist = datetime.now(ist_tz)
+            if now_ist.hour == 8 and now_ist.minute == 0:
+                if not sent_today:
+                    print(f"⏰ 08:00 AM IST reached! Generating and dispatching Daily Morning Digest...")
+                    digest_msg = generate_morning_digest()
+                    send_url = f"https://api.telegram.org/bot{token.strip()}/sendMessage"
+                    requests.post(send_url, json={
+                        "chat_id": chat_id,
+                        "text": digest_msg,
+                        "parse_mode": "HTML"
+                    }, timeout=15)
+                    sent_today = True
+            else:
+                sent_today = False
+        except Exception as e:
+            print(f"Error in daily morning digest scheduler: {e}")
+        time.sleep(40)
+
 def start_telegram_bot_loop(token: str = DEFAULT_BOT_TOKEN, chat_id: str = DEFAULT_CHAT_ID):
     """Background polling worker listening for mobile commands from Telegram API."""
     if not token:
@@ -146,6 +185,12 @@ def start_telegram_bot_loop(token: str = DEFAULT_BOT_TOKEN, chat_id: str = DEFAU
     target_chat_id = str(chat_id).strip() if chat_id else ""
     url = f"https://api.telegram.org/bot{token.strip()}"
     last_update_id = 0
+    
+    # Launch background thread for 8:00 AM IST daily morning digest
+    if target_chat_id:
+        t = threading.Thread(target=start_daily_scheduler, args=(token, target_chat_id), daemon=True)
+        t.start()
+
     print(f"🤖 Starting Telegram Mobile Bot Worker (Target Chat ID: {target_chat_id})...")
     
     while True:

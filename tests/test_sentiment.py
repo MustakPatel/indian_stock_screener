@@ -1,5 +1,11 @@
-import pytest
-from src.sentiment import calculate_text_sentiment, format_sentiment_summary, analyze_sentiment
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+try:
+    from src.sentiment import calculate_text_sentiment, format_sentiment_summary, analyze_sentiment
+except ModuleNotFoundError:
+    from sentiment import calculate_text_sentiment, format_sentiment_summary, analyze_sentiment
 
 def test_calculate_text_sentiment():
     pos_text = "Reliance Industries reports 25% surge in quarterly net profit, beats estimates."

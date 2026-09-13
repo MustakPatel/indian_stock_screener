@@ -1,5 +1,11 @@
-import pytest
-from src.backtester import backtest_stock
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+try:
+    from src.backtester import backtest_stock
+except ModuleNotFoundError:
+    from backtester import backtest_stock
 
 def test_backtest_stock_structure():
     res = backtest_stock("ZOMATO.NS", period="3mo")

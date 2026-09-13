@@ -1,7 +1,12 @@
-import pytest
 import os
+import sys
 import json
-from src.portfolio import load_holdings, save_holdings, add_holding, remove_holding, calculate_portfolio_summary
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+try:
+    from src.portfolio import load_holdings, save_holdings, add_holding, remove_holding, calculate_portfolio_summary
+except ModuleNotFoundError:
+    from portfolio import load_holdings, save_holdings, add_holding, remove_holding, calculate_portfolio_summary
 
 def test_load_and_save_holdings(tmp_path):
     test_file = tmp_path / "test_portfolio.json"

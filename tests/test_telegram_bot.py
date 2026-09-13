@@ -1,5 +1,11 @@
-import pytest
-from src.telegram_bot import process_telegram_command
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+try:
+    from src.telegram_bot import process_telegram_command
+except ModuleNotFoundError:
+    from telegram_bot import process_telegram_command
 
 def test_process_telegram_command_help():
     response = "\n".join(process_telegram_command("/help"))
