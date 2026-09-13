@@ -1,6 +1,7 @@
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, request
 import os
 import sys
+import threading
 
 # Ensure root folder is in python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -10,9 +11,17 @@ from src.sentiment import analyze_sentiment
 from src.notifier import format_telegram_alert
 from src.portfolio import calculate_portfolio_summary, add_holding, remove_holding
 from src.ipo import get_active_ipos
-from flask import request
+from src.telegram_bot import start_telegram_bot_loop
 
 app = Flask(__name__, static_folder="../static", static_url_path="", template_folder="../static")
+
+# Start Telegram Bot Worker in background daemon thread for 100% free unified hosting
+try:
+    bot_thread = threading.Thread(target=start_telegram_bot_loop, daemon=True)
+    bot_thread.start()
+    print("🤖 Telegram Bot background thread started successfully!")
+except Exception as e:
+    print(f"Error launching Telegram Bot thread: {e}")
 
 @app.route("/")
 def index():
