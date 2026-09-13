@@ -161,7 +161,7 @@ def start_telegram_bot_loop(token: str = DEFAULT_BOT_TOKEN, chat_id: str = DEFAU
                     sender_chat_id = str(message.get("chat", {}).get("id", ""))
                     
                     if text:
-                        print(f"Received Telegram command: '{text}' from Chat ID: {sender_chat_id}")
+                        print(f"Received Stock Bot command: '{text}' from Chat ID: {sender_chat_id}")
                         replies = process_telegram_command(text)
                         for reply in replies:
                             send_url = f"{url}/sendMessage"
@@ -172,9 +172,15 @@ def start_telegram_bot_loop(token: str = DEFAULT_BOT_TOKEN, chat_id: str = DEFAU
                             }, timeout=10)
                             print(f"Sent reply status: {send_resp.status_code}")
                             time.sleep(0.5) # Short delay between messages
+            elif resp.status_code == 409:
+                print("Telegram API 409 Conflict: Another process is polling. Retrying in 5s...")
+                time.sleep(5)
+            else:
+                print(f"Telegram getUpdates status: {resp.status_code} - {resp.text}")
+                time.sleep(3)
         except Exception as e:
             print(f"Telegram polling error: {e}")
-        time.sleep(2)
+            time.sleep(3)
 
 if __name__ == "__main__":
     start_telegram_bot_loop()
