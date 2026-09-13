@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Stock AI Screener & Sentiment Bot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navbar Header -->
+        <header class="navbar">
+            <div class="brand">
+                <div class="logo-icon">⚡</div>
+                <div>
+                    <h1>IN-Stock AI <span class="badge-pro">NSE PRO</span></h1>
+                    <p class="subtitle">Real-time Technical Screener & News Sentiment Scanner</p>
+                </div>
+            </div>
+            
+            <div class="status-bar">
+                <div class="status-pill">
+                    <span class="status-dot green"></span>
+                    <span id="market-status">NSE Market Live</span>
+                </div>
+                <div class="time-display" id="live-time">10:55 AM IST</div>
+                <button class="btn-refresh" id="btn-scan" onclick="fetchSignals()">
+                    <span class="refresh-icon">🔄</span> Run Scanner
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="tab-btn active" id="tab-screener" onclick="switchView('screener')">⚡ Market Screener</button>
+            <button class="tab-btn" id="tab-ipo" onclick="switchView('ipo')">🚀 High-Profit IPOs</button>
+            <button class="tab-btn" id="tab-portfolio" onclick="switchView('portfolio')">💼 My Personal Portfolio</button>
+        </div>
+
+        <!-- IPO View Container -->
+        <div id="view-ipo" class="view-container" style="display: none;">
+            <div class="section-header">
+                <h2>Upcoming Mainboard & SME IPO Listing Gain Scanner</h2>
+            </div>
+            <div class="signals-grid" id="ipo-container">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Scanning Active Indian IPOs & Grey Market Premium (GMP)...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Portfolio View Container -->
+        <div id="view-portfolio" class="view-container" style="display: none;">
+            <section class="kpi-grid">
+                <div class="kpi-card highlight-blue">
+                    <div class="kpi-title">Total Invested Capital</div>
+                    <div class="kpi-value" id="port-invested">₹0.00</div>
+                    <div class="kpi-foot">Cost basis of current active holdings</div>
+                </div>
+                <div class="kpi-card highlight-green">
+                    <div class="kpi-title">Current Market Value</div>
+                    <div class="kpi-value" id="port-val">₹0.00</div>
+                    <div class="kpi-foot">Live evaluation from NSE</div>
+                </div>
+                <div class="kpi-card" id="card-pnl">
+                    <div class="kpi-title">Total Profit / Loss</div>
+                    <div class="kpi-value" id="port-pnl">₹0.00</div>
+                    <div class="kpi-foot" id="port-pnl-pct">0.00%</div>
+                </div>
+            </section>
+
+            <div class="section-header">
+                <h2>My Active Holdings</h2>
+                <button class="btn-primary" onclick="openAddModal()">➕ Add New Stock Buy</button>
+            </div>
+
+            <div class="table-card">
+                <table class="portfolio-table">
+                    <thead>
+                        <tr>
+                            <th>Stock</th>
+                            <th>Quantity</th>
+                            <th>Avg Buy Price</th>
+                            <th>Live Price</th>
+                            <th>Current Value</th>
+                            <th>Unrealized P&L</th>
+                            <th>AI Recommendation</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="portfolio-tbody">
+                        <tr><td colspan="8" style="text-align: center; color: #94a3b8;">Loading portfolio...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Screener View Container -->
+        <div id="view-screener" class="view-container">
+        <!-- KPI Metrics Header Grid -->
+        <section class="kpi-grid">
+            <div class="kpi-card highlight-green">
+                <div class="kpi-title">🟢 PUT MONEY HERE (BUY)</div>
+                <div class="kpi-value" id="kpi-buy">--</div>
+                <div class="kpi-foot">High conviction buy opportunities</div>
+            </div>
+            <div class="kpi-card highlight-red">
+                <div class="kpi-title">🔴 WITHDRAW MONEY (SELL/EXIT)</div>
+                <div class="kpi-value" id="kpi-sell">--</div>
+                <div class="kpi-foot">Overbought / Breakdown alerts</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Market Sentiment Index</div>
+                <div class="kpi-value" id="kpi-sentiment">Positive (+0.62)</div>
+                <div class="kpi-foot">Aggregated Indian Financial News</div>
+            </div>
+            <div class="kpi-card highlight-blue">
+                <div class="kpi-title">Total Scanned Stocks</div>
+                <div class="kpi-value" id="kpi-scanned">--</div>
+                <div class="kpi-foot">Nifty 50 & Top F&O Watchlist</div>
+            </div>
+        </section>
+
+        <!-- Main Ticker & Signal Cards Section -->
+        <main class="content-section">
+            <div class="section-header">
+                <h2>Market Allocation & Investment Decisions</h2>
+                <div class="filter-group">
+                    <button class="filter-btn active" onclick="filterSignals('ALL')">All Stocks</button>
+                    <button class="filter-btn buy-btn" onclick="filterSignals('BUY')">🟢 Put Money Here (BUY)</button>
+                    <button class="filter-btn sell-btn" onclick="filterSignals('SELL')">🔴 Withdraw / Exit (SELL)</button>
+                    <button class="filter-btn" onclick="filterSignals('HOLD')">🟡 Hold / Watch</button>
+                </div>
+            </div>
+
+            <!-- Signal Cards Container -->
+            <div class="signals-grid" id="signals-container">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Scanning NSE Stocks & Analyzing News Sentiment...</p>
+                </div>
+            </div>
+        </main>
+        </div>
+    </div>
+
+    <!-- Trade Entry Modal -->
+    <div id="modal-trade" class="modal-backdrop" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>➕ Add Stock Buy Position</h3>
+                <button class="btn-close" onclick="closeAddModal()">&times;</button>
+            </div>
+            <form id="form-add-trade" onsubmit="handleFormSubmit(event)">
+                <div class="form-group">
+                    <label>NSE Stock Symbol (e.g. RELIANCE, TCS, INFY)</label>
+                    <input type="text" id="input-symbol" placeholder="RELIANCE" required>
+                </div>
+                <div class="form-group">
+                    <label>Shares Quantity</label>
+                    <input type="number" step="any" id="input-quantity" placeholder="10" required>
+                </div>
+                <div class="form-group">
+                    <label>Average Buy Price (₹)</label>
+                    <input type="number" step="any" id="input-price" placeholder="1250.00" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="filter-btn" onclick="closeAddModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save to Portfolio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>
