@@ -97,8 +97,10 @@ def evaluate_signals(row: dict) -> dict:
         "stop_loss": stop_loss
     }
 
+from src.backtester import backtest_stock
+
 def scan_stocks(symbols: list = None) -> list:
-    """Scans watchlist of NSE symbols and returns evaluated signals."""
+    """Scans watchlist of NSE symbols and returns evaluated signals with historical win-rate backtest."""
     if not symbols:
         symbols = DEFAULT_NSE_WATCHLIST
     
@@ -113,7 +115,17 @@ def scan_stocks(symbols: list = None) -> list:
             last_row = df_ind.iloc[-1].to_dict()
             last_row["Symbol"] = sym
             sig = evaluate_signals(last_row)
+            
+            # Attach 1-year historical win-rate backtest
+            bt_res = backtest_stock(sym)
+            sig["win_rate"] = bt_res["win_rate"]
+            sig["total_backtest_trades"] = bt_res["total_trades"]
+            sig["avg_backtest_return"] = bt_res["avg_return"]
+            sig["verdict"] = bt_res["verdict"]
+            sig["verdict_badge_class"] = bt_res["badge_class"]
+
             results.append(sig)
         except Exception as e:
             print(f"Error scanning {sym}: {e}")
     return results
+

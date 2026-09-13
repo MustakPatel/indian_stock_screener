@@ -79,6 +79,10 @@ function renderSignals() {
         const actionBadge = s.action_badge || (s.action === 'BUY' ? '🟢 PUT MONEY HERE (BUY)' : (s.action === 'SELL' ? '🔴 WITHDRAW MONEY (SELL)' : '🟡 HOLD / WATCH'));
         const actionDesc = s.action_desc || 'Consolidating market technicals.';
         
+        const winRate = s.win_rate || 65.0;
+        const verdict = s.verdict || '🟡 MODERATE BUY';
+        const verdictBadgeClass = s.verdict_badge_class || 'badge-warning';
+
         return `
             <div class="signal-card">
                 <div class="card-top">
@@ -88,6 +92,10 @@ function renderSignals() {
 
                 <div class="action-banner ${s.action}">
                     ${actionBadge}
+                </div>
+
+                <div class="action-reason" style="background: rgba(15, 23, 42, 0.6); padding: 8px 12px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #38bdf8;">
+                    <strong>📊 1-Yr Backtest Win Rate:</strong> <span style="color: #38bdf8; font-weight: 700;">${winRate}%</span> (${verdict})
                 </div>
 
                 <div class="action-reason">

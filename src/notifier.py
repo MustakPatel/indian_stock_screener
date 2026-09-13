@@ -1,7 +1,7 @@
 import requests
 
 def format_telegram_alert_html(signal: dict, sentiment: dict) -> str:
-    """Formats technical signal and sentiment data into HTML-safe Telegram alert message."""
+    """Formats technical signal, backtest win rate, and sentiment data into HTML-safe Telegram alert message."""
     sym = signal.get("symbol", "")
     price = signal.get("price", 0.0)
     sig_type = signal.get("signal_type", "NEUTRAL")
@@ -14,6 +14,9 @@ def format_telegram_alert_html(signal: dict, sentiment: dict) -> str:
     t2 = signal.get("target_2", 0.0)
     sl = signal.get("stop_loss", 0.0)
     
+    win_rate = signal.get("win_rate", 65.0)
+    verdict = signal.get("verdict", "🟡 MODERATE")
+    
     sent_label = sentiment.get("label", "Neutral")
     
     emoji = "🟢" if "BUY" in action_badge else ("🔴" if "SELL" in action_badge or "WITHDRAW" in action_badge else "🟡")
@@ -23,6 +26,7 @@ def format_telegram_alert_html(signal: dict, sentiment: dict) -> str:
 
 📌 <b>Stock:</b> {sym}
 💰 <b>ACTION DECISION:</b> {action_badge}
+📊 <b>Historical Win Rate (1Yr):</b> {win_rate}% ({verdict})
 💵 <b>Current Price:</b> ₹{price}
 📊 <b>Technical Signal:</b> {sig_type} (Confidence: {conf}%)
 💡 <b>AI Insight:</b> {action_desc}

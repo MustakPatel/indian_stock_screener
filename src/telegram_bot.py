@@ -11,6 +11,7 @@ from src.sentiment import analyze_sentiment
 from src.notifier import format_telegram_alert, format_telegram_alert_html
 from src.portfolio import calculate_portfolio_summary, add_holding, remove_holding
 from src.ipo import get_active_ipos
+from src.backtester import backtest_stock
 
 DEFAULT_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8993271292:AAFqmVh6MdUHMpyvOULWnAWP27qedY6L6PM")
 DEFAULT_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "8530348020")
@@ -28,7 +29,8 @@ def process_telegram_command(text: str, filepath: str = None) -> list:
 🤖 <b>INDIAN STOCK & IPO HIGH-PROFIT AI BOT</b> 🤖
 
 📲 <b>Available Commands:</b>
-• <code>/scan</code> - Scan NSE market for High-Profit BUY/SELL stock signals
+• <code>/scan</code> - Scan NSE market with 1-Yr Historical Win Rate Signals
+• <code>/backtest &lt;symbol&gt;</code> - Run 1-Year Historical Backtest & Win-Rate Score for any stock (e.g. <code>/backtest ZOMATO</code>)
 • <code>/ipo</code> - Scan upcoming Indian IPOs for High Listing Gain opportunities (+30% to +80%)
 • <code>/portfolio</code> - View live portfolio summary, value & profit/loss
 • <code>/buy &lt;symbol&gt; &lt;qty&gt; &lt;price&gt;</code> - Record stock buy position
@@ -90,6 +92,25 @@ def process_telegram_command(text: str, filepath: str = None) -> list:
             sent = analyze_sentiment(sig["symbol"])
             messages.append(format_telegram_alert_html(sig, sent))
         return messages
+
+    elif cmd == "/backtest":
+        if len(parts) < 2:
+            return ["⚠️ Usage: <code>/backtest &lt;symbol&gt;</code> (Example: <code>/backtest ZOMATO</code> or <code>/backtest HAL.NS</code>)"]
+        sym = parts[1]
+        bt = backtest_stock(sym)
+        msg = f"""
+📊 <b>1-YEAR HISTORICAL BACKTEST REPORT</b> 📊
+
+📌 <b>Stock Symbol:</b> {bt['symbol']}
+🎯 <b>AI DECISION:</b> {bt['verdict']}
+
+📈 <b>Historical Win Rate:</b> <b>{bt['win_rate']}%</b>
+🔢 <b>Total Trade Signals (1 Yr):</b> {bt['total_trades']}
+🟢 <b>Winning Trades:</b> {bt['win_trades']}
+🔴 <b>Losing Trades:</b> {bt['loss_trades']}
+💰 <b>Average Return per Trade:</b> {bt['avg_return']:+.2f}%
+"""
+        return [msg.strip()]
 
     elif cmd == "/buy":
         if len(parts) < 4:
