@@ -23,9 +23,34 @@ try:
 except Exception as e:
     print(f"Error launching Telegram Bot thread: {e}")
 
+import time
+import requests
+
+def keep_alive_ping_worker():
+    """Pings public URL every 8 minutes to prevent Render Free Tier spin-down."""
+    public_url = os.environ.get("RENDER_EXTERNAL_URL", "https://indian-stock-screener-1naa.onrender.com")
+    print(f"💓 Keep-Alive Worker initialized for {public_url}")
+    while True:
+        time.sleep(480) # 8 minutes
+        try:
+            r = requests.get(f"{public_url.rstrip('/')}/health", timeout=15)
+            print(f"💓 Keep-Alive Ping Status: {r.status_code}")
+        except Exception as e:
+            print(f"Keep-Alive ping error: {e}")
+
+try:
+    ka_thread = threading.Thread(target=keep_alive_ping_worker, daemon=True)
+    ka_thread.start()
+except Exception as e:
+    print(f"Error starting keep alive thread: {e}")
+
 @app.route("/")
 def index():
     return send_from_directory("../static", "index.html")
+
+@app.route("/health")
+def health():
+    return "OK", 200
 
 @app.route("/api/signals")
 def get_signals():
